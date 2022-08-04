@@ -1,31 +1,25 @@
+import { useState } from "react";
 import { gql, useMutation } from "@apollo/client";
-import { faFacebookSquare } from "@fortawesome/free-brands-svg-icons";
 import { faMugHot } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useForm } from "react-hook-form";
-import { useLocation } from "react-router-dom";
-import styled from "styled-components";
+import { useHistory, useLocation } from "react-router-dom";
 import { logUserIn } from "../apollo";
+import styled from "styled-components";
 import AuthLayout from "../components/auth/AuthLayout";
 import BottomBox from "../components/auth/BottomBox";
 import Button from "../components/auth/Button";
 import FormBox from "../components/auth/FormBox";
 import FormError from "../components/auth/FormError";
 import Input from "../components/auth/Input";
-import Separator from "../components/auth/Separator";
 import PageTitle from "../components/PageTitle";
 import routes from "../routes";
 
-const FacebookLogin = styled.div`
-  color: #385285;
-  span {
-    margin-left: 10px;
-    font-weight: 600;
-  }
-`;
-
 const Notification = styled.div`
   color: #2ecc71;
+`;
+
+const Logo = styled.div`
+  cursor: pointer;
 `;
 
 const LOGIN_MUTATION = gql`
@@ -41,105 +35,113 @@ const LOGIN_MUTATION = gql`
 function Login() {
   const location = useLocation();
   const state = location.state || null;
+  const history = useHistory();
 
+  const [formValue, setFormValue] = useState({
+    username: "",
+    password: "",
+  });
+
+  const [errorMessage, setError] = useState({
+    username: "",
+    password: "",
+    result: "",
+  });
+
+  //입력 이벤트
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormValue({ ...formValue, [name]: value });
+  };
+
+  //로그인 제출
+  const onSubmit = (event) => {
+    event.preventDefault();
+    if (loading) {
+      return;
+    }
+
+    //에러메시지 초기화
+    setError({
+      username: "",
+      password: "",
+      result: "",
+    });
+
+    //로그인 useQuery 실행
+    login({
+      variables: {
+        username: formValue.username,
+        password: formValue.password,
+      },
+    });
+  };
+
+  //로그인 결과
   const onCompleted = (data) => {
     const {
       login: { ok, error, token },
     } = data;
+
     if (!ok) {
-      return setError("result", {
-        message: error,
-      });
+      if (error.includes("아이디")) {
+        setError({ ...errorMessage, username: error });
+      } else if (error.includes("비밀번호")) {
+        setError({ ...errorMessage, password: error });
+      } else {
+        setError({ ...errorMessage, result: error });
+      }
     }
+
     if (token) {
       logUserIn(token);
     }
   };
 
+  //로그인 Mutation
   const [login, { loading }] = useMutation(LOGIN_MUTATION, {
     onCompleted,
   });
 
-  const {
-    watch,
-    register,
-    handleSubmit,
-    formState: { errors },
-    getValues,
-    setError,
-    clearErrors,
-  } = useForm({
-    mode: "onChange",
-  });
-
-  const onSubmitValid = () => {
-    if (loading) {
-      return;
-    }
-
-    const { username, password } = getValues();
-    login({
-      variables: {
-        username,
-        password,
-      },
-    });
+  const goToHome = () => {
+    history.push("/");
   };
-
-  const clearLoginError = () => {
-    clearErrors("result");
-  };
-
-  console.log(watch());
 
   return (
     <AuthLayout>
       <PageTitle title="로그인" />
       <FormBox>
-        <div>
+        <Logo onClick={goToHome}>
           <FontAwesomeIcon icon={faMugHot} size="3x" />
-        </div>
+        </Logo>
         {state?.message && <Notification>{state.message}</Notification>}
-        <form onSubmit={handleSubmit(onSubmitValid)}>
+        <form onSubmit={onSubmit}>
           <Input
-            {...register("username", {
-              required: "사용자 이름이 입력되지 않았습니다.",
-              pattern: {
-                message:
-                  "한글, 특수문자를 제외한 1~15자 이내 영문만 사용 가능합니다.",
-                value: /^[a-z0-9]{1,15}$/g,
-              },
-              maxLength: 15,
-            })}
-            onChange={clearLoginError}
-            hasError={Boolean(errors?.username?.message)}
+            onChange={handleChange}
             type="text"
-            maxLength={15}
+            name="username"
             placeholder="사용자 이름"
+            hasError={errorMessage.username}
+            maxLength={15}
+            required
           />
-          <FormError message={errors?.username?.message} />
+          <FormError message={errorMessage.username} />
           <Input
-            {...register("password", {
-              required: "비밀번호를 입력하세요.",
-            })}
-            onChange={clearLoginError}
+            onChange={handleChange}
             type="password"
+            name="password"
             placeholder="비밀번호"
-            hasError={Boolean(errors?.password?.message)}
+            hasError={errorMessage.password}
+            required
           />
-          <FormError message={errors?.password?.message} />
+          <FormError message={errorMessage.password} />
           <Button
             type="submit"
             value={loading ? "로딩 중..." : "로그인"}
             disabled={loading}
           />
-          <FormError message={errors?.result?.message} />
+          <FormError message={errorMessage.result} />
         </form>
-        <Separator />
-        <FacebookLogin>
-          <FontAwesomeIcon icon={faFacebookSquare} />
-          <span>페이스북 로그인</span>
-        </FacebookLogin>
       </FormBox>
       <BottomBox
         text="아이디가 없으신가요?"

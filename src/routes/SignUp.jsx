@@ -25,6 +25,10 @@ const Subtitle = styled(FatLink)`
   margin-top: 10px;
 `;
 
+const Logo = styled.div`
+  cursor: pointer;
+`;
+
 const CREATE_ACCOUNT_MUTATION = gql`
   mutation createAccount(
     $name: String!
@@ -69,7 +73,6 @@ function SingUp() {
   });
 
   const {
-    watch,
     register,
     handleSubmit,
     formState: { errors, isValid },
@@ -90,16 +93,21 @@ function SingUp() {
     });
   };
 
-  console.log(watch());
+  const goToHome = () => {
+    history.push("/");
+  };
 
   return (
     <AuthLayout>
       <PageTitle title="Sign up" />
       <FormBox>
         <HeaderContainer>
-          <FontAwesomeIcon icon={faMugHot} size="3x" />
+          <Logo onClick={goToHome}>
+            <FontAwesomeIcon icon={faMugHot} size="3x" />
+          </Logo>
           <Subtitle>
-            노마드 커피를 이용하기 위해 회원가입이 필요합니다.
+            노마드 커피를 이용하기 위해 <br />
+            회원가입이 필요합니다.
           </Subtitle>
         </HeaderContainer>
         <form onSubmit={handleSubmit(onSubmitValid)}>
@@ -157,7 +165,7 @@ function SingUp() {
       <BottomBox
         text="이미 아이디가 있나요?"
         linkText="로그인"
-        link={routes.home}
+        link={routes.login}
       />
     </AuthLayout>
   );

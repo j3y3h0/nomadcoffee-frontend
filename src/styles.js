@@ -4,6 +4,7 @@ import reset from "styled-reset";
 export const lightTheme = {
   accent: "#f5cd79",
   bgColor: "#FAFAFA",
+  inputColor: "#f5f6fa",
   fontColor: "rgb(38, 38, 38)",
   borderColor: "rgb(219, 219, 219)",
 };
@@ -23,6 +24,7 @@ export const GlobalStyles = createGlobalStyle`
     }
     * {
       box-sizing:border-box;
+      font-family: 'Spoqa Han Sans Neo', 'sans-serif';
     }
     body {
         background-color:${(props) => props.theme.bgColor};
